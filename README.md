@@ -117,5 +117,4 @@ FastAPI provides an interactive OpenAPI UI at `http://localhost:8000/docs`:
 
 ---
 
-## License
-MIT License
+Developed by **[Gonella Surya Prakash](https://github.com/GSuryaP)**
