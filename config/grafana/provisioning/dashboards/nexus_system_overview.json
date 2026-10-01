@@ -1,0 +1,62 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Active Incidents",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "datasource": "Postgres_Incidents",
+      "targets": [
+        {
+          "datasource": "Postgres_Incidents",
+          "editorMode": "builder",
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) FROM incidents WHERE status = 'OPEN';",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU Utilization (5m Mean)",
+      "gridPos": { "h": 8, "w": 12, "x": 6, "y": 0 },
+      "id": 2,
+      "datasource": "InfluxDB_Telemetry",
+      "targets": [
+        {
+          "datasource": "InfluxDB_Telemetry",
+          "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"host_metrics\")\n  |> filter(fn: (r) => r[\"_field\"] == \"cpu_mean_5m\")",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "ML Anomaly Score",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "datasource": "InfluxDB_Telemetry",
+      "targets": [
+        {
+          "datasource": "InfluxDB_Telemetry",
+          "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"host_metrics\")\n  |> filter(fn: (r) => r[\"_field\"] == \"anomaly_score\")",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["nexus", "observability"],
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "Nexus Distributed Monitoring & Incident Overview",
+  "uid": "nexus-overview-01"
+}

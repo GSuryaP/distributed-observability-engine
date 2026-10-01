@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Database & Storage
+*.db
+*.sqlite3
+nexus_fallback.db
+postgres_data/
+
+# Logs & Temporary files
+*.log
+.system_generated/
+.gemini/
+
+# OS & IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Environment Variables
+.env
+local.env

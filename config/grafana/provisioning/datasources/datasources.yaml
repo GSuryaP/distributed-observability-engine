@@ -1,0 +1,24 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB_Telemetry
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    jsonData:
+      version: Flux
+      organization: nexus-obs
+      defaultBucket: telemetry
+    secureJsonData:
+      token: nexus-secret-token-super-secure
+    isDefault: true
+
+  - name: Postgres_Incidents
+    type: postgres
+    url: postgres:5432
+    database: nexus_incidents
+    user: nexus
+    secureJsonData:
+      password: nexuspassword
+    jsonData:
+      sslmode: disable

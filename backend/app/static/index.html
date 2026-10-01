@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus — Observability & Incident Intelligence Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Marked.js CDN for Post-Mortem Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --grafana-bg: #0b0c10;
+            --grafana-panel-bg: #111217;
+            --grafana-border: #22252b;
+            --grafana-border-hover: #343842;
+            --grafana-text: #ccccdc;
+            --grafana-text-muted: #8e8e9e;
+            --grafana-orange: #ff7800;
+            --grafana-blue: #5794f2;
+            --grafana-green: #73bf69;
+            --grafana-red: #f2495c;
+            --grafana-yellow: #fade2a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--grafana-bg);
+            color: var(--grafana-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Grafana Top Navbar */
+        header {
+            height: 48px;
+            background: #181b1f;
+            border-bottom: 1px solid var(--grafana-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-size: 13px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .grafana-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: white;
+            font-size: 15px;
+        }
+
+        .grafana-brand i {
+            color: var(--grafana-orange);
+            font-size: 18px;
+        }
+
+        .breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--grafana-text-muted);
+            font-size: 12px;
+        }
+
+        .breadcrumbs span { color: white; font-weight: 500; }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .grafana-btn {
+            background: #22252b;
+            border: 1px solid #343842;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 2px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .grafana-btn:hover {
+            background: #2c3038;
+            border-color: #464c58;
+        }
+
+        .btn-orange {
+            background: var(--grafana-orange);
+            border-color: var(--grafana-orange);
+            color: white;
+        }
+        .btn-orange:hover { background: #e06a00; }
+
+        .time-picker {
+            background: #111217;
+            border: 1px solid #343842;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 2px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Dashboard Workspace Layout */
+        .workspace {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Row Layout */
+        .panel-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
+        }
+
+        .grafana-panel {
+            background: var(--grafana-panel-bg);
+            border: 1px solid var(--grafana-border);
+            border-radius: 2px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+        }
+
+        .panel-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-body {
+            padding: 16px;
+            flex: 1;
+            position: relative;
+        }
+
+        /* Graph Canvas */
+        .chart-container {
+            height: 340px;
+            width: 100%;
+        }
+
+        /* Legend Bar */
+        .legend-bar {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 8px 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+            color: var(--grafana-text-muted);
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 3px;
+            border-radius: 1px;
+        }
+
+        /* Topology Visualizer */
+        .topo-container {
+            height: 340px;
+            position: relative;
+            background: #0d0e12;
+            border: 1px dashed var(--grafana-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .node-box {
+            position: absolute;
+            padding: 10px 16px;
+            background: #181b1f;
+            border: 1px solid var(--grafana-blue);
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: 'Roboto Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .node-box.alerting {
+            border-color: var(--grafana-red);
+            box-shadow: 0 0 15px rgba(242, 73, 92, 0.4);
+            animation: blink-border 1.5s infinite;
+        }
+
+        @keyframes blink-border {
+            0% { border-color: var(--grafana-red); }
+            50% { border-color: transparent; }
+            100% { border-color: var(--grafana-red); }
+        }
+
+        /* Incidents Table */
+        .incident-row-item {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--grafana-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .incident-row-item:hover, .incident-row-item.active {
+            background: #181b1f;
+        }
+
+        .badge-severity {
+            padding: 2px 8px;
+            border-radius: 2px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .sev-critical { background: rgba(242, 73, 92, 0.2); color: var(--grafana-red); border: 1px solid var(--grafana-red); }
+
+        /* Post-Mortem Viewer */
+        .postmortem-container {
+            padding: 16px;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #b8b8c8;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .postmortem-container h3 { color: white; font-size: 14px; margin-bottom: 8px; }
+        .postmortem-container code { font-family: 'Roboto Mono', monospace; background: #181b1f; padding: 2px 6px; color: var(--grafana-orange); }
+        .postmortem-container pre { background: #08090c; padding: 10px; border-radius: 3px; margin: 8px 0; border: 1px solid var(--grafana-border); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Grafana Top Navbar -->
+    <header>
+        <div class="header-left">
+            <div class="grafana-brand"><i class="fa-solid fa-chart-line"></i> NEXUS PLATFORM</div>
+            <div class="breadcrumbs">
+                Home / Dashboards / <span>Nexus Distributed Monitoring & Incident Overview</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="grafana-btn btn-orange" onclick="triggerChaos('cpu')"><i class="fa-solid fa-bolt"></i> Inject CPU Chaos</button>
+            <button class="grafana-btn" onclick="triggerChaos('memory')"><i class="fa-solid fa-memory"></i> Inject RAM Leak</button>
+            <button class="grafana-btn" onclick="generateWaveform()"><i class="fa-solid fa-play"></i> Generate Waveform</button>
+            <div class="time-picker">
+                <i class="fa-regular fa-clock"></i> Last 5 minutes
+            </div>
+            <button class="grafana-btn"><i class="fa-solid fa-rotate-right"></i> 5s</button>
+        </div>
+    </header>
+
+    <!-- Workspace Panel Grid -->
+    <div class="workspace">
+
+        <!-- Top Panel Row: Graph + Topology -->
+        <div class="panel-row">
+            
+            <!-- Grafana Dynamic Time-Series Graph Panel -->
+            <div class="grafana-panel">
+                <div class="panel-header">
+                    <div class="panel-header-left">
+                        <i class="fa-solid fa-chart-line" style="color: var(--grafana-green);"></i> CPU Utilization (5m Mean)
+                    </div>
+                    <i class="fa-solid fa-ellipsis-vertical" style="color: var(--grafana-text-muted);"></i>
+                </div>
+                <div class="panel-body">
+                    <div class="chart-container">
+                        <canvas id="grafanaChart"></canvas>
+                    </div>
+                </div>
+                <div class="legend-bar">
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--grafana-green);"></div> cpu_mean_5m chintu-ubuntu</div>
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--grafana-blue);"></div> memory_mean_5m chintu-ubuntu</div>
+                    <div class="legend-item"><div class="legend-dot" style="background: var(--grafana-red);"></div> ml_anomaly_score</div>
+                </div>
+            </div>
+
+            <!-- Topology Graph Panel -->
+            <div class="grafana-panel">
+                <div class="panel-header">
+                    <div class="panel-header-left">
+                        <i class="fa-solid fa-diagram-project" style="color: var(--grafana-blue);"></i> Service Dependency Graph
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="topo-container">
+                        <div class="node-box" style="top: 30px; left: 40px;"><i class="fa-solid fa-globe" style="color: var(--grafana-blue);"></i> api-gateway</div>
+                        <div class="node-box alerting" style="top: 130px; left: 130px;"><i class="fa-solid fa-server" style="color: var(--grafana-red);"></i> payment-service</div>
+                        <div class="node-box" style="top: 230px; left: 40px;"><i class="fa-solid fa-database" style="color: var(--grafana-green);"></i> postgres-db</div>
+                        <div class="node-box" style="top: 230px; left: 240px;"><i class="fa-solid fa-bolt" style="color: var(--grafana-yellow);"></i> redis-cache</div>
+                    </div>
+                </div>
+                <div class="legend-bar">
+                    <i class="fa-solid fa-circle-info" style="color: var(--grafana-red);"></i> Suspected Root Cause Node: <strong style="color: white; margin-left: 6px;" id="rca-target-text">payment-service (80%)</strong>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Panel Row: Incidents + AI Post-Mortem -->
+        <div class="panel-row">
+            
+            <!-- Active Incidents Table -->
+            <div class="grafana-panel">
+                <div class="panel-header">
+                    <div class="panel-header-left"><i class="fa-solid fa-triangle-exclamation" style="color: var(--grafana-orange);"></i> Incident Alert Log</div>
+                </div>
+                <div class="panel-body" style="padding: 0;" id="incident-list">
+                    <!-- Incidents rendered here -->
+                </div>
+            </div>
+
+            <!-- AI Post-Mortem Panel -->
+            <div class="grafana-panel">
+                <div class="panel-header">
+                    <div class="panel-header-left"><i class="fa-solid fa-robot" style="color: var(--grafana-orange);"></i> AI Incident Post-Mortem</div>
+                </div>
+                <div class="postmortem-container" id="postmortem-box">
+                    <p style="color: var(--grafana-text-muted);">Select an incident to view root-cause analysis.</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Live JS Script -->
+    <script>
+        const API_BASE = "http://localhost:8000/api/v1";
+
+        // Chart.js Grafana Style Configuration
+        const ctx = document.getElementById('grafanaChart').getContext('2d');
+        const grafanaChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'cpu_mean_5m chintu-ubuntu',
+                        borderColor: '#73bf69',
+                        borderWidth: 1.5,
+                        pointRadius: 2,
+                        pointBackgroundColor: '#73bf69',
+                        fill: false,
+                        tension: 0.2,
+                        data: []
+                    },
+                    {
+                        label: 'memory_mean_5m chintu-ubuntu',
+                        borderColor: '#5794f2',
+                        borderWidth: 1.5,
+                        pointRadius: 2,
+                        pointBackgroundColor: '#5794f2',
+                        fill: false,
+                        tension: 0.2,
+                        data: []
+                    },
+                    {
+                        label: 'ml_anomaly_score',
+                        borderColor: '#f2495c',
+                        borderWidth: 1.5,
+                        borderDash: [3, 3],
+                        pointRadius: 0,
+                        fill: false,
+                        tension: 0.2,
+                        data: []
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.04)', drawBorder: false },
+                        ticks: { color: '#8e8e9e', font: { family: 'Roboto Mono', size: 10 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.04)', drawBorder: false },
+                        ticks: { color: '#8e8e9e', font: { family: 'Roboto Mono', size: 10 } }
+                        // Dynamic Y-axis auto-scaling like Grafana
+                    }
+                }
+            }
+        });
+
+        // Polling Data
+        async function fetchIncidents() {
+            try {
+                const resp = await fetch(`${API_BASE}/incidents/`);
+                if (resp.ok) {
+                    const incidents = await resp.json();
+                    renderIncidents(incidents);
+                }
+            } catch (e) {
+                console.log("Polling backend...", e);
+            }
+        }
+
+        function renderIncidents(incidents) {
+            const list = document.getElementById('incident-list');
+            list.innerHTML = '';
+            
+            if (!incidents.length) {
+                list.innerHTML = '<div style="padding: 16px; color: var(--grafana-text-muted);">No active incidents logged.</div>';
+                return;
+            }
+
+            incidents.forEach((inc, idx) => {
+                const item = document.createElement('div');
+                item.className = `incident-row-item ${idx === 0 ? 'active' : ''}`;
+                item.onclick = () => selectIncident(inc, item);
+                item.innerHTML = `
+                    <div>
+                        <div style="font-weight: 500; color: white;">#${inc.id} — ${inc.title}</div>
+                        <div style="font-size: 11px; color: var(--grafana-text-muted); margin-top: 2px;">
+                            Service: ${inc.service_name} | Root Cause: <span style="color: var(--grafana-red);">${inc.suspected_root_cause || 'Analyzing'}</span>
+                        </div>
+                    </div>
+                    <span class="badge-severity sev-critical">${inc.severity}</span>
+                `;
+                list.appendChild(item);
+
+                if (idx === 0) selectIncident(inc, item);
+            });
+        }
+
+        function selectIncident(inc, element) {
+            document.querySelectorAll('.incident-row-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('rca-target-text').innerText = `${inc.suspected_root_cause || inc.service_name} (${int(inc.confidence_score * 100)}%)`;
+            document.getElementById('postmortem-box').innerHTML = marked.parse(inc.summary_markdown || "Analyzing...");
+        }
+
+        function int(v) { return Math.round(v); }
+
+        // Live Simulated Stream for Chart with Dynamic Magnification
+        let counter = 0;
+        setInterval(() => {
+            counter++;
+            const now = new Date().toLocaleTimeString();
+            
+            if (grafanaChart.data.labels.length > 25) {
+                grafanaChart.data.labels.shift();
+                grafanaChart.data.datasets[0].data.shift();
+                grafanaChart.data.datasets[1].data.shift();
+                grafanaChart.data.datasets[2].data.shift();
+            }
+
+            // Dynamic baseline variations matching Grafana's line style
+            const cpu = 12 + Math.sin(counter / 2) * 4 + (Math.random() * 2);
+            const mem = 45 + Math.random();
+            const anomaly = (cpu > 25) ? 85 : 15;
+
+            grafanaChart.data.labels.push(now);
+            grafanaChart.data.datasets[0].data.push(cpu);
+            grafanaChart.data.datasets[1].data.push(mem);
+            grafanaChart.data.datasets[2].data.push(anomaly);
+            grafanaChart.update('none');
+        }, 3000);
+
+        async function triggerChaos(type) {
+            alert(`⚡ Triggering ${type.toUpperCase()} Chaos experiment!`);
+            await fetch(`${API_BASE}/metrics/ingest`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    host_id: "chintu-ubuntu",
+                    features: { cpu_mean_5m: 95.0, cpu_slope_1m: 0.85, memory_mean_5m: 85.0 }
+                })
+            });
+            await fetch(`${API_BASE}/incidents/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    title: `Chaos Triggered: ${type}`,
+                    service_name: "payment-service",
+                    severity: "CRITICAL"
+                })
+            });
+            fetchIncidents();
+        }
+
+        async function generateWaveform() {
+            alert("📊 Generating report time-series...");
+            fetchIncidents();
+        }
+
+        fetchIncidents();
+        setInterval(fetchIncidents, 5000);
+    </script>
+</body>
+</html>
