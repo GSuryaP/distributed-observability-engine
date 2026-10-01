@@ -2,60 +2,39 @@
 
 A production-grade, distributed observability, real-time stream processing, anomaly detection, and automated root-cause analysis (RCA) platform.
 
-```
-                                  [ MONITORED INFRASTRUCTURE ]
-                     ┌─────────────────────────┬─────────────────────────┐
-                     │ Host & Process Metrics  │  Service & App Metrics  │
-                     └────────────┬────────────┴────────────┬────────────┘
-                                  │                         │
-                                  ▼                         ▼
-                           ┌──────────────────────────────────────┐
-                           │    Python Telemetry Agent (psutil)    │
-                           └──────────────────┬───────────────────┘
-                                              │
-                                              ▼
-                           ┌──────────────────────────────────────┐
-                           │   Apache Kafka (Partitioned Topics)  │
-                           │ metrics.host | process | app | logs  │
-                           └──────────────────┬───────────────────┘
-                                              │
-                                              ▼
-                           ┌──────────────────────────────────────┐
-                           │   Apache Flink Stream Processor      │
-                           │ - Tumbling / Sliding Windows         │
-                           │ - Moving Avg, StdDev, Rate of Change │
-                           │ - Feature Vector Assembly            │
-                           └──────────────────┬───────────────────┘
-                                              │
-                                              ▼
-                        ┌────────────────────────────────────────────┐
-                        │      Dual-Stage Anomaly Detection          │
-                        │ ┌──────────────────┐  ┌──────────────────┐ │
-                        │ │ Rule Engine      │  │ ML Anomaly Model │ │
-                        │ │ (Thresholds/Duration)│ (IsolationForest)│ │
-                        │ └─────────┬────────┘  └─────────┬────────┘ │
-                        └───────────┼─────────────────────┼──────────┘
-                                    └──────────┬──────────┘
-                                               ▼
-                           ┌──────────────────────────────────────┐
-                           │    Temporal & Spatial RCA Engine     │
-                           │ - Topology Graph Traversal (NetworkX)│
-                           │ - Incident Deduplication & Grouping  │
-                           │ - Causal Score Matrix Calculation    │
-                           └──────────────────┬───────────────────┘
-                                              │
-                     ┌────────────────────────┴────────────────────────┐
-                     ▼                                                 ▼
-      ┌─────────────────────────────┐                   ┌─────────────────────────────┐
-      │  InfluxDB / TimescaleDB &   │                   │     LLM Analyst Engine      │
-      │    PostgreSQL Incident DB   │                   │ (Structured Prompt Context) │
-      └──────────────┬──────────────┘                   └──────────────┬──────────────┘
-                     │                                                 │
-                     ▼                                                 ▼
-      ┌─────────────────────────────┐                   ┌─────────────────────────────┐
-      │     Grafana Dashboards      │                   │ Human-Readable Incident     │
-      │ (System, Host, App, Incident│                   │ Report & Remediation Steps  │
-      └──────────────┬──────────────┘                   └──────────────┬──────────────┘
+```mermaid
+flowchart TD
+    subgraph Monitored_Infra ["Monitored Infrastructure"]
+        M1["Host & Process Metrics"]
+        M2["Service & App Metrics"]
+    end
+
+    Agent["Python Telemetry Agent (psutil)"]
+    Kafka["Apache Kafka (Partitioned Topics)<br/>metrics.host | process | app | logs"]
+    Flink["Apache Flink Stream Processor<br/>- Tumbling & Sliding Windows<br/>- Moving Avg, StdDev, Rate of Change<br/>- Feature Vector Assembly"]
+
+    subgraph Anomaly_Detection ["Dual-Stage Anomaly Detection"]
+        Rules["Stage 1: Dynamic Rule Engine"]
+        ML["Stage 2: ML IsolationForest Model"]
+    end
+
+    RCA["Temporal & Spatial RCA Engine<br/>- Topology Graph Traversal (NetworkX)<br/>- Incident Deduplication<br/>- Causal Confidence Matrix"]
+    
+    DB[("Time-Series & Incident DB<br/>InfluxDB / PostgreSQL")]
+    LLM["LLM Incident Analyst<br/>(Structured Prompt Context)"]
+    Grafana["Grafana & Custom UI Dashboards"]
+    Report["Human-Readable Incident Report"]
+
+    M1 --> Agent
+    M2 --> Agent
+    Agent --> Kafka
+    Kafka --> Flink
+    Flink --> Anomaly_Detection
+    Anomaly_Detection --> RCA
+    RCA --> DB
+    RCA --> LLM
+    DB --> Grafana
+    LLM --> Report
 ```
 
 ---
