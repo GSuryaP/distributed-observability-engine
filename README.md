@@ -39,6 +39,19 @@ flowchart TD
 
 ---
 
+## 📸 Platform Screenshots & Visual Dashboards
+
+### 1. Nexus Custom Observability Dashboard & AI Incident Post-Mortem Viewer (`:8000`)
+![Nexus Custom Dashboard](docs/screenshots/nexus_custom_dashboard.png)
+
+### 2. Grafana Real-Time Chaos Outage Spikes & Metric Waveforms (`:3001`)
+![Grafana Chaos Outage Spikes](docs/screenshots/grafana_chaos_spikes.png)
+
+### 3. Grafana Dynamic Auto-Magnified Time-Series Curve (`:3001`)
+![Grafana Dynamic Waveform](docs/screenshots/grafana_dynamic_waveform.png)
+
+---
+
 ## Key Features
 
 1. **Lightweight Distributed Telemetry Agent**: Collects Host CPU/RAM/Disk/Net (`psutil`), Process stats, Docker container stats (`docker-py`), and HTTP/TCP dependency latency.
