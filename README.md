@@ -47,9 +47,6 @@ flowchart TD
 ### 2. Grafana Real-Time Chaos Outage Spikes & Metric Waveforms (`:3001`)
 ![Grafana Chaos Outage Spikes](docs/screenshots/grafana_chaos_spikes.png)
 
-### 3. Grafana Dynamic Auto-Magnified Time-Series Curve (`:3001`)
-![Grafana Dynamic Waveform](docs/screenshots/grafana_dynamic_waveform.png)
-
 ---
 
 ## Key Features
