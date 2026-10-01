@@ -54,21 +54,21 @@ class LLMIncidentAnalyst:
 
     def _generate_fallback_template(self, data: Dict[str, Any]) -> str:
         alerts_list = "\n".join([f"- {a}" for a in data["correlated_alerts"]]) or "- No correlated metric alerts."
-        return f"""### 🚨 Incident Post-Mortem Report #{data['incident_id']}
+        return f"""### Incident Post-Mortem Report #{data['incident_id']}
 
 **Title:** {data['title']}  
 **Affected Service:** `{data['affected_service']}`  
 **Suspected Root Cause:** `{data['suspected_root_cause']}` (Confidence: {int(data['confidence_score'] * 100)}%)  
 
-#### 🔍 Causal Propagation Chain
+#### Causal Propagation Chain
 ```text
 {data['causal_dependency_chain']}
 ```
 
-#### ⚡ Symptoms & Correlated Alerts
+#### Symptoms & Correlated Alerts
 {alerts_list}
 
-#### 🛠️ Recommended Remediation Steps
+#### Recommended Remediation Steps
 1. Inspect container logs and CPU/RAM saturation on `{data['suspected_root_cause']}`.
 2. Check database connection pool and lock wait times if latency spiked.
 3. Restart degraded worker pod/service if metric slope remains positive.

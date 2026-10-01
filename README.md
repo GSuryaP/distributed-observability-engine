@@ -2,6 +2,20 @@
 
 A production-grade, distributed observability, real-time stream processing, anomaly detection, and automated root-cause analysis (RCA) platform.
 
+---
+
+## Platform Screenshots & Visual Dashboards
+
+### 1. Nexus Custom Observability Dashboard & AI Incident Post-Mortem Viewer
+![Nexus Custom Dashboard](docs/screenshots/nexus_custom_dashboard.png)
+
+### 2. Grafana Real-Time Chaos Outage Spikes & Metric Waveforms
+![Grafana Chaos Outage Spikes](docs/screenshots/grafana_chaos_spikes.png)
+
+---
+
+## System Architecture Blueprint
+
 ```mermaid
 flowchart TD
     subgraph Monitored_Infra ["Monitored Infrastructure"]
@@ -39,16 +53,6 @@ flowchart TD
 
 ---
 
-## 📸 Platform Screenshots & Visual Dashboards
-
-### 1. Nexus Custom Observability Dashboard & AI Incident Post-Mortem Viewer (`:8000`)
-![Nexus Custom Dashboard](docs/screenshots/nexus_custom_dashboard.png)
-
-### 2. Grafana Real-Time Chaos Outage Spikes & Metric Waveforms (`:3001`)
-![Grafana Chaos Outage Spikes](docs/screenshots/grafana_chaos_spikes.png)
-
----
-
 ## Key Features
 
 1. **Lightweight Distributed Telemetry Agent**: Collects Host CPU/RAM/Disk/Net (`psutil`), Process stats, Docker container stats (`docker-py`), and HTTP/TCP dependency latency.
@@ -78,9 +82,9 @@ Spin up Kafka, InfluxDB, PostgreSQL, and Grafana via Docker Compose:
 ```bash
 make infra-up
 ```
-* **Grafana**: `http://localhost:3000` (User: `admin`, Pass: `admin`)
-* **InfluxDB**: `http://localhost:8086` (Token: `nexus-secret-token-super-secure`)
-* **FastAPI Backend**: `http://localhost:8000/docs`
+* **Grafana**: `http://localhost:3001` (User: `admin`, Pass: `admin`)
+* **InfluxDB**: `http://localhost:8087` (Token: `nexus-secret-token-super-secure`)
+* **FastAPI Backend & Custom UI**: `http://localhost:8000/`
 
 ### 3. Run Telemetry Agent
 ```bash
